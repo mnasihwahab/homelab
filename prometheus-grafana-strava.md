@@ -209,6 +209,6 @@ Additional Notes
 TLS Configuration: Ensure that the grafana-tls secret is created by Cert-Manager and contains the necessary certificates.
 DNS Propagation: It may take some time for DNS changes to propagate.
     
-
+*** DNS not configured yet as dindt plan to buy any domain yet to test.
 
 
