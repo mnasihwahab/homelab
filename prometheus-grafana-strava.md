@@ -123,8 +123,91 @@ Step 9: Connect with Strava
     
     Client ID: 149897
     Client Sec: e5920c83b8050cff004e3ea6213fe9cef84bc866
-    
-    
+
+Step 10: To make your Grafana dashboard accessible via a URL with Ingress, TLS, and DNS, follow these steps:
+
+1: Install and Configure Ingress Controller
+
+Install NGINX Ingress Controller:
+
+	kubectl apply -f https://raw.githubusercontent.com/kubernetes/ingress-nginx/main/deploy/static/provider/cloud/deploy.yaml
+
+Verify the Ingress Controller:
+
+	kubectl get pods -n ingress-nginx
+
+2: Create Ingress Resource for Grafana
+
+Create an Ingress resource:
+
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: grafana-ingress
+  namespace: monitoring
+  annotations:
+    nginx.ingress.kubernetes.io/rewrite-target: /
+    cert-manager.io/cluster-issuer: "letsencrypt-prod"
+spec:
+  tls:
+  - hosts:
+    - grafana.example.com
+    secretName: grafana-tls
+  rules:
+  - host: grafana.example.com
+    http:
+      paths:
+      - path: /
+        pathType: Prefix
+        backend:
+          service:
+            name: grafana
+            port:
+              number: 80
+              
+Apply the Ingress resource:
+
+	kubectl apply -f grafana-ingress.yaml
+
+3: Set Up TLS with Cert-Manager
+
+Install Cert-Manager:
+
+	kubectl apply -f https://github.com/jetstack/cert-manager/releases/download/v1.7.1/cert-manager.yaml
+
+Create a ClusterIssuer for Let's Encrypt:
+
+apiVersion: cert-manager.io/v1
+kind: ClusterIssuer
+metadata:
+  name: letsencrypt-prod
+spec:
+  acme:
+    server: https://acme-v02.api.letsencrypt.org/directory
+    email: your-email@example.com
+    privateKeySecretRef:
+      name: letsencrypt-prod
+    solvers:
+    - http01:
+        ingress:
+          class: nginx
+          
+Apply the ClusterIssuer:
+
+	kubectl apply -f cluster-issuer.yaml
+
+4: Configure DNS
+
+Create a DNS record for grafana.example.com pointing to the external IP of your Ingress controller. This can be done through your DNS provider's management console.
+
+5: Access Grafana Dashboard
+
+Once everything is set up, you can access your Grafana dashboard securely at https://grafana.example.com.
+
+Additional Notes
+
+TLS Configuration: Ensure that the grafana-tls secret is created by Cert-Manager and contains the necessary certificates.
+DNS Propagation: It may take some time for DNS changes to propagate.
     
 
 
